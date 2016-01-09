@@ -1,28 +1,54 @@
 from __future__ import unicode_literals
+import django
 from django.test import TestCase
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from distutils.version import StrictVersion as SV
+
 
 from relatives.utils import object_link, object_edit_link
 from .models import (Pirate, Pet, Ship, Sailor, Movie, Actor, NotInAdmin,
                      Something, Book, Image, Journal)
 
 
+def version(default_value, django18__gte=None, django19__gte=None):
+    "Return correct value for correct version liblary"
+
+    django_ver = '.'.join([str(v) for v in django.VERSION[0:2]])
+
+    if django18__gte and SV(django_ver) >= SV('1.8'):
+        return django18__gte
+    if django19__gte and SV(django_ver) >= SV('1.9'):
+        return django19__gte
+
+    return default_value
+
+
 class ObjectEditLinkTest(TestCase):
 
     def test_default(self):
         ship = Ship.objects.create(id=1, name="Star of India")
-        self.assertEqual(object_edit_link()(ship),
-                         '<a href="/adm/tests/ship/1/">Star of India</a>')
+        self.assertEqual(
+            object_edit_link()(ship),
+            version(
+                '<a href="/adm/tests/ship/1/">Star of India</a>',
+                django19__gte='<a href="/adm/tests/ship/1/change/">Star of India</a>'
+            )
+        )
         pirate = Pirate.objects.create(id=1, name="Lowell Taylor")
         self.assertEqual(object_edit_link()(pirate), "Lowell Taylor")
 
     def test_custom_edit_text(self):
         ship = Ship.objects.create(id=1, name="Star of India")
-        self.assertEqual(object_edit_link("Go There")(ship),
-                         '<a href="/adm/tests/ship/1/">Go There</a>')
+        self.assertEqual(
+            object_edit_link("Go There")(ship),
+            version(
+                '<a href="/adm/tests/ship/1/">Go There</a>',
+                django19__gte='<a href="/adm/tests/ship/1/change/">Go There</a>'
+            )
+        )
 
     def test_default_blank_text(self):
         pirate = Pirate.objects.create(id=1, name="Lowell Taylor")
@@ -31,8 +57,13 @@ class ObjectEditLinkTest(TestCase):
     def test_custom_edit_and_blank_text(self):
         ship = Ship.objects.create(id=1, name="Star of India")
         pirate = Pirate.objects.create(id=1, name="Lowell Taylor")
-        self.assertEqual(object_edit_link("Go There", "N/A")(ship),
-                         '<a href="/adm/tests/ship/1/">Go There</a>')
+        self.assertEqual(
+            object_edit_link("Go There", "N/A")(ship),
+            version(
+                '<a href="/adm/tests/ship/1/">Go There</a>',
+                django19__gte='<a href="/adm/tests/ship/1/change/">Go There</a>'
+            )
+        )
         self.assertEqual(object_edit_link("Go There", "N/A")(pirate), "N/A")
 
 
@@ -44,15 +75,17 @@ class ObjectLinkTest(TestCase):
 
     def test_with_primary_key(self):
         ship = Ship.objects.create(id=1, name="Star of India")
-        self.assertEqual(object_link(ship),
-                         '<a href="/adm/tests/ship/1/">Star of India</a>')
-
-    def test_no_primary_key(self):
-        ship = Ship(name="Star of India")
-        self.assertEqual(object_link(ship), "Star of India")
+        self.assertEqual(
+            object_link(ship),
+            version(
+                '<a href="/adm/tests/ship/1/">Star of India</a>',
+                django19__gte='<a href="/adm/tests/ship/1/change/">Star of India</a>'
+            )
+        )
 
 
 class TemplateFilterTest(TestCase):
+
     def setUp(self):
         self.user = User.objects.create_superuser('u', 'u@example.com', 'pass')
 
@@ -65,8 +98,12 @@ class TemplateFilterTest(TestCase):
         sailor = Sailor.objects.create(name="John Ford", ship=ship)
         response = self.client.get(reverse('admin:tests_sailor_change',
                                            args=[sailor.id]))
-        self.assertIn(b'<a href="/adm/tests/ship/1/">Star of India</a>',
-                      response.content)
+        self.assertIn(
+            version(
+                b'<a href="/adm/tests/ship/1/">Star of India</a>',
+                django19__gte=b'<a href="/adm/tests/ship/1/change/">Star of India</a>'
+            ),
+            response.content)
 
     def test_no_foreign_key(self):
         self.login()
@@ -99,6 +136,7 @@ class TemplateFilterTest(TestCase):
 
 
 class RelatedObjectsTagTest(TestCase):
+
     def test_foreign_keys(self):
         ship = Ship.objects.create(id=1, name="Star of India")
         body = render_to_string('related_objects_fk_test.html', {'obj': ship})

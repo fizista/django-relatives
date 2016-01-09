@@ -2,7 +2,10 @@ from django.template import Library
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
-from django.contrib.admin.util import lookup_field
+try:
+    from django.contrib.admin.util import lookup_field
+except ImportError:
+    from django.contrib.admin.utils import lookup_field
 from django.core.exceptions import ObjectDoesNotExist
 
 from ..utils import get_admin_url, GenericObjects
@@ -58,6 +61,7 @@ def related_objects(obj):
                        GenericObjects(obj).get_generic_objects())
     for related in related_objects:
         try:
+            print('DEBUG:  ', related.name)
             url = reverse('admin:{0}_{1}_changelist'.format(
                           *related.name.split(':')))
         except NoReverseMatch:

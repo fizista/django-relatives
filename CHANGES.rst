@@ -2,9 +2,15 @@ Changes
 =======
 
 Unreleased (tip)
-------------------
+----------------
 
 - Generic relations templatetag support implemented
+
+
+0.4.0 (2016-01-10)
+------------------
+
+- Add Django 1.8 and 1.9 support
 
 
 0.3.1 (2013-07-27)

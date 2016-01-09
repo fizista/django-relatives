@@ -6,7 +6,11 @@ from django.core.urlresolvers import NoReverseMatch
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 from django.conf import settings
-from django.contrib.contenttypes.generic import GenericForeignKey as GFK
+try:
+    from django.contrib.contenttypes.generic import GenericForeignKey as GFK
+except ImportError:
+    # Django >= 1.9
+    from django.contrib.contenttypes.fields import GenericForeignKey as GFK
 
 
 def get_admin_url(obj):
@@ -16,7 +20,6 @@ def get_admin_url(obj):
 
 
 def object_edit_link(edit_text=None, blank_text=None):
-
     """
     Return function that takes an object and returns admin link to object
 
@@ -69,7 +72,7 @@ class RelatedObject(object):
     @staticmethod
     def generate_name(field):
         return ':'.join([field.model._meta.app_label,
-                        field.model._meta.model_name])
+                         field.model._meta.model_name])
 
     @staticmethod
     def generate_field_name(field, ct_pk):
@@ -89,7 +92,7 @@ class GenericObjects(object):
         self.cache_key = getattr(settings, 'RELATIVES_CACHE_KEY',
                                  'relatives_cache')
         self.cache_time = getattr(settings, 'RELATIVES_CACHE_TIME',
-                                  int(60*60*24))
+                                  int(60 * 60 * 24))
         self.generic_objects = []
 
     def get_generic_objects(self):

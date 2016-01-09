@@ -3,7 +3,16 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+try:
+    from django.contrib.contenttypes.generic import GenericForeignKey
+except ImportError:
+    # Django >= 1.9
+    from django.contrib.contenttypes.fields import GenericForeignKey
+try:
+    from django.contrib.contenttypes.generic import GenericRelation
+except ImportError:
+    # Django >= 1.9
+    from django.contrib.contenttypes.fields import GenericRelation
 
 
 @python_2_unicode_compatible
@@ -61,12 +70,18 @@ class Movie(models.Model):
 
     name = models.CharField(max_length=80)
 
+    def __str__(self):
+        return self.name
+
 
 class Something(models.Model):
 
     """Somethings don't have an admin URL and are linked to by NotInAdmins"""
 
     text = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.text
 
 
 class NotInAdmin(models.Model):
@@ -82,6 +97,9 @@ class Book(models.Model):
 
     name = models.CharField(max_length=10)
 
+    def __str__(self):
+        return self.name
+
 
 class Image(models.Model):
 
@@ -89,7 +107,10 @@ class Image(models.Model):
 
     ct = models.ForeignKey(ContentType)
     obj_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('ct', 'obj_id')
+    content_object = GenericForeignKey('ct', 'obj_id')
+
+    def __str__(self):
+        return str(self.content_object)
 
 
 class Journal(models.Model):
@@ -98,4 +119,7 @@ class Journal(models.Model):
     also it have GenericRelation link to Images"""
 
     name = models.CharField(max_length=10)
-    images = generic.GenericRelation(Image)
+    images = GenericRelation(Image)
+
+    def __str__(self):
+        return self.name

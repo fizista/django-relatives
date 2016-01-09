@@ -9,6 +9,14 @@ from django.conf import settings
 sys.path.insert(0, abspath(dirname(__file__)))
 
 
+class DisableMigrations(object):
+
+    def __contains__(self, item):
+        return True
+
+    def __getitem__(self, item):
+        return "notmigrations"
+
 if not settings.configured:
     settings.configure(
         INSTALLED_APPS=(
@@ -30,6 +38,7 @@ if not settings.configured:
         ],
         ROOT_URLCONF='relatives.tests.urls',
         STATIC_URL='/static/',
+        MIGRATION_MODULES=DisableMigrations(),
     )
 
 

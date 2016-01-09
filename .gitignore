@@ -8,3 +8,8 @@ htmlcov
 build
 docs/_build
 MANIFEST
+.project
+.pydevproject
+.python-version
+test.sq3
+.settings

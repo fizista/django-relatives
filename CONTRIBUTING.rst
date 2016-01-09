@@ -32,3 +32,10 @@ First install tox::
 To run tox and generate a coverage report (in ``htmlcov`` directory)::
 
     make test
+
+To debug the test site::
+
+    cd relatives/tests/
+    ./manage.py migrate
+    ./manage.py createsuperuser --username admin --email admin@example.com
+    ./manage.py runserver
